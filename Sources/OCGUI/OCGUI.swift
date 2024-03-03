@@ -47,6 +47,16 @@ public enum OCSizeUnit : CustomStringConvertible {
     }
 }
 
+/// A content justification style, conforming to `justify-content` in CSS.
+public enum OCContentJustification : String {
+    case flexStart = "flex-start !important"
+    case flexEnd = "flex-end !important"
+    case center = "center !important"
+    case spaceBetween = "space-between !important"
+    case spaceAround = "space-around !important"
+    case spaceEvenly = "space-evenly !important"
+}
+
 
 
 // MARK: - OCControl
@@ -505,14 +515,14 @@ extension OCLayout {
 /// A layout object that places widgets next to each other from left to right.
 public class OCHBox : OCControl, OCLayout {
 
-    public init(controls: [OCControl]) {
-        super.init(_pythonObject: GUI.HBox(controls.map { $0.pythonObject }))
+    public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
+        super.init(_pythonObject: GUI.HBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
     }
 }
 
 public class OCVBox : OCControl, OCLayout {
-    public init(controls: [OCControl]) {
-        super.init(_pythonObject: GUI.VBox(controls.map { $0.pythonObject }))
+    public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
+        super.init(_pythonObject: GUI.VBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
     }
 }
 
