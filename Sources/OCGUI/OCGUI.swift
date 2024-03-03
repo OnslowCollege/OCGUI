@@ -542,6 +542,8 @@ public protocol OCAppDelegate {
 /// Finally, run `.start()` on an instance of this class to run the program. Usually, this is the last line in your code.
 open class OCApp : OCAppDelegate {
 
+    public init() {}
+
     /// Start the program.
     public func start() {
         // Add the Swift `main` method to the Python subclass.
