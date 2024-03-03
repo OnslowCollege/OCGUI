@@ -540,7 +540,7 @@ public protocol OCAppDelegate {
 /// }
 /// ```
 /// Finally, run `.start()` on an instance of this class to run the program. Usually, this is the last line in your code.
-public class OCApp : OCAppDelegate {
+open class OCApp : OCAppDelegate {
 
     /// Start the program.
     public func start() {
@@ -577,7 +577,7 @@ public class OCApp : OCAppDelegate {
     ///
     /// You must use the `.pythonObject` property after the instance that you wish to return for compatibility with Remi.
     /// If this method is not overridden, it will display a Quit button.
-    public func main(_ mainArgs: [PythonObject]) -> PythonObject {
+    open func main(_ mainArgs: [PythonObject]) -> PythonObject {
         let label = OCLabel(text: "Override the main method to create a GUI. Copy the example code below to get started.")
 
         let textArea = OCTextArea()
