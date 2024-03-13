@@ -709,6 +709,9 @@ open class OCApp : OCAppDelegate {
     
     private var _server: PythonObject = Python.None
     fileprivate var _app: PythonObject = Python.None
+
+    public init() {
+    }
     
     /// Start the program.
     public func start() {
