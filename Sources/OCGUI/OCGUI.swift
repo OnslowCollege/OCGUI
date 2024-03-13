@@ -15,7 +15,10 @@ let GUI = Python.import("remi.gui")
 ///
 /// Each of the members use the OCSizeUnit enum in order to represent pixel sizes or percentage sizes, depending on which is used.
 public struct OCSize {
+    /// The width. Use `.pixels(x)` or `.percent(x)` in the initializer for this struct, replacing `x` with the desired integer size.
     let width: OCSizeUnit
+    
+    /// The height. Use `.pixels(x)` or `.percent(x)` in the initializer for this struct, replacing `x` with the desired integer size.
     let height: OCSizeUnit
 }
 
@@ -29,6 +32,7 @@ public enum OCSizeUnit : CustomStringConvertible {
     /// The size as a percentage.
     case percent(Int)
 
+    /// A CSS-compatible string for the specified size.
     public var description: String {
         switch self {
             case .pixels(let size): return "\(size)px"
@@ -36,7 +40,11 @@ public enum OCSizeUnit : CustomStringConvertible {
         }
     }
 
-    /// Create a size unit from a string such as `"100px"` or `"100%"`. This will fail to initialize if the string format is invalid.
+    /// Create a size unit from a string such as `"100px"` or `"100%"`
+    /// This will fail to initialize if the string format is invalid.
+    ///
+    /// - Parameters:
+    ///   - string: A CSS string formatted either `"#px"` or `"#%"`.
     public init?(fromString string: String) {
         guard string.hasSuffix("px") || string.hasSuffix("%") else { return nil }
         
@@ -49,11 +57,22 @@ public enum OCSizeUnit : CustomStringConvertible {
 
 /// A content justification style, conforming to `justify-content` in CSS.
 public enum OCContentJustification : String {
+    /// The controls are aligned to the start of the box, usually the left.
     case flexStart = "flex-start !important"
+
+    /// The controls are aligned to the end of the box, usually the right.
     case flexEnd = "flex-end !important"
+
+    /// The controls are aligned to the center of the box.
     case center = "center !important"
+
+    /// The controls are aligned to the start, center, and end. There are spaces between each.
     case spaceBetween = "space-between !important"
+
+    /// The controls are aligned similarly to `.spaceBetween`, with spaces at the start and end.
     case spaceAround = "space-around !important"
+
+    /// The controls are aligned similarly to `.spaceAround` with the space and control width being equal.
     case spaceEvenly = "space-evenly !important"
 }
 
@@ -62,28 +81,32 @@ public enum OCContentJustification : String {
 // MARK: - OCControl
 
 /// A protocol for controls that can be updated with a click.
-public protocol OCControlClickable { func onClick(_ function: @escaping ([PythonObject]) -> (PythonObject)) }
+public protocol OCControlClickable {
+    func onClick(_ function: @escaping (any OCControlClickable) -> (Void))
+}
 extension OCControlClickable where Self: OCControl {
-    public func onClick(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.onclick.do(PythonInstanceMethod(function))
+    public func onClick(_ function: @escaping (any OCControlClickable) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self)
+            return Python.None
+        }
+        self._pythonObject.onclick.do(PythonInstanceMethod(pythonFunction))
     }
 }
 
 /// A protocol for controls that emit an event when changed, such as drop-down menus or lists.
-public protocol OCControlChangeable { func onChange(_ function: @escaping ([PythonObject]) -> (PythonObject)) }
-extension OCControlChangeable where Self: OCControl {
-    public func onChange(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.onchange.do(PythonInstanceMethod(function))
-    }
+public protocol OCControlChangeable {
+    associatedtype NewValue
+    func onChange(_ function: @escaping (_ control: any OCControlChangeable, _ newValue: NewValue) -> (Void))
 }
 
 /// A Swift stand-in for a Remi Widget.
 public class OCControl : PythonConvertible {
 
     /// The Python-native widget.
-    let _pythonObject: PythonObject
+    public let _pythonObject: PythonObject
     
-    fileprivate init(_pythonObject: PythonObject) {
+    init(_pythonObject: PythonObject) {
         self._pythonObject = _pythonObject
     }
 
@@ -98,6 +121,32 @@ public class OCControl : PythonConvertible {
             return !keys.contains("disabled")
         } set {
             self._pythonObject.set_enabled(newValue)
+        }
+    }
+    
+    /// The visibility of the control. If it is false, the user will not be able to see it.
+    public var visible: Bool {
+        get {
+            let keys = Array(self._pythonObject.style.keys())
+            // Return true by default because all controls are visible by default.
+            guard let displayKey = keys.first(where: { $0 == "display" }) else { return true }
+            return displayKey != "none"
+        }
+        set {
+            self._pythonObject.set_style("display: \(newValue ? "block" : "none")")
+        }
+    }
+    
+    /// The boldness of the control. If it is false, the user will not be able to see it.
+    public var isBold: Bool {
+        get {
+            let keys = Array(self._pythonObject.style.keys())
+            // Return false by default because no controls start bold.
+            guard let weightKey = keys.first(where: { $0 == "font-weight" }) else { return false }
+            return weightKey != "none"
+        }
+        set {
+            self._pythonObject.set_style("font-weight: \(newValue ? "bold" : "normal")")
         }
     }
 
@@ -125,34 +174,49 @@ public class OCControl : PythonConvertible {
 
 
 
+// MARK: - Mixins
+
+public protocol OCTextConvertible {
+    /// The text presented in the button.
+    var text: String { get set }
+}
+
+extension OCTextConvertible where Self: OCControl {
+    public var text: String {
+        get { String(self._pythonObject.get_text())! }
+        set { self._pythonObject.set_text(newValue); self._pythonObject.redraw() }
+    }
+}
+
+
 // MARK: - Controls
 
 
 
 /// A regular Button that can be clicked.
-public class OCButton : OCControl, OCControlClickable {
+public class OCButton : OCControl, OCTextConvertible, OCControlClickable {
     
     /// Create a Button with the specified text.
     public init(text: String) {
         super.init(_pythonObject: GUI.Button(text: text))
     }
+    
+    override init(_pythonObject: PythonObject) {
+        super.init(_pythonObject: _pythonObject)
+    }
+
 }
 
 
 
 /// A label to present text.
-public class OCLabel : OCControl {
+public class OCLabel : OCControl, OCTextConvertible {
     
     /// Create a label with the specified text.
     public init(text: String) {
         super.init(_pythonObject: GUI.Label(text: text))
     }
 
-    /// The text presented in the label.
-    public var text: String {
-        get { return String(self._pythonObject.get_text())! }
-        set { self._pythonObject.set_text(text: newValue); self._pythonObject.redraw() }
-    }
 }
 
 
@@ -179,7 +243,17 @@ public class OCImageView : OCControl {
 
 
 /// A single-line field for the user to enter text.
-public class OCTextField : OCControl, OCControlChangeable {
+public class OCTextField : OCControl, OCTextConvertible, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, String) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.text)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = String
+    
     
     /// Create a text field. If the hint parameter has an argument, that text is shown in light grey
     /// until the user starts typing in the field.
@@ -187,9 +261,10 @@ public class OCTextField : OCControl, OCControlChangeable {
         super.init(_pythonObject: GUI.TextInput(single_line: true, hint: hint ?? ""))
     }
 
-    /// The text present in the text field. This cannot be overridden programatically.
+    /// The text present in the text field.
     public var text: String {
-        return String(self._pythonObject.get_value())!
+        get { return String(self._pythonObject.get_value())! }
+        set { self._pythonObject.set_value(newValue); self._pythonObject.redraw() }
     }
 }
 
@@ -197,7 +272,17 @@ public class OCTextField : OCControl, OCControlChangeable {
 
 /// A large, multi-line area to display text and/or have the user enter text.
 /// A label to present text.
-public class OCTextArea : OCControl, OCControlChangeable {
+public class OCTextArea : OCControl, OCTextConvertible, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, String) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.text)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = String
+    
     
     /// Create a text area. If the hint parameter has an argument, that text is shown in light grey
     /// until the user starts typing in the area.
@@ -206,7 +291,7 @@ public class OCTextArea : OCControl, OCControlChangeable {
         self.size = OCSize(width: OCSizeUnit.percent(100), height: OCSizeUnit.pixels(200))
     }
 
-    /// The text present in the text area. This can be overridden programatically.
+    /// The text present in the text area.
     public var text: String {
         get { return String(self._pythonObject.get_value())! }
         set { self._pythonObject.set_value(text: newValue); self._pythonObject.redraw() }
@@ -218,6 +303,16 @@ public class OCTextArea : OCControl, OCControlChangeable {
 
 /// A check box. It can be checked (true) or unchecked (false).
 public class OCCheckBox : OCControl, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, Bool) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.checked)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = Bool
+    
 
     /// Create a check box. If the default value is not overriden, the check box starts unchecked.
     public init(defaultValue: Bool? = false) {
@@ -236,6 +331,16 @@ public class OCCheckBox : OCControl, OCControlChangeable {
 
 /// A color picker.
 public class OCColorPicker : OCControl, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, String) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.color)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = String
+    
 
     /// Create a color picker.
     ///
@@ -257,6 +362,16 @@ public class OCColorPicker : OCControl, OCControlChangeable {
 
 /// A date picker.
 public class OCDatePicker : OCControl, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, Date) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.date)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = Date
+    
 
     /// Create a date picker. When the user clicks on this, the browser's built-in date picker is shown.
     /// If the default date is not overridden, the local date at the time the page was rendered is used.
@@ -336,6 +451,16 @@ public class OCDropDownItem : OCControl {
 
 /// A drop-down menu with multiple text options.
 public class OCDropDown : OCControl, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, OCDropDownItem) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.selectedItem!)
+            return Python.None
+        }
+        self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = OCDropDownItem
+    
     
     /// Create a drop-down menu. The provided strings are converted to drop-down items, with their index as the key.
     public init(fromArray items: [String]) {
@@ -382,6 +507,16 @@ public class OCDropDown : OCControl, OCControlChangeable {
 
 /// A dialog window.
 public class OCDialog : OCControl {
+    
+    /// The confirm button.
+    fileprivate var confirmButton: OCButton {
+        return OCButton(_pythonObject: self._pythonObject.conf)
+    }
+    
+    /// The cancel button.
+    fileprivate var cancelButton: OCButton {
+        return OCButton(_pythonObject: self._pythonObject.cancel)
+    }
 
     /// Create a dialog window with the specified title and message.
     public init(title: String, message: String) {
@@ -409,12 +544,7 @@ public class OCDialog : OCControl {
     }
 
     /// Show the dialog.
-    ///
-    /// This can only be called from within PythonInstanceMethods.
-    ///
-    /// **⚠️ WARNING!** If this is called inside the `main()` function of an OCApp subclass,
-    /// you must pass `mainArgs[0]` as an argument to this function.
-    public func show(in app: PythonObject) {
+    public func show(in app: OCAppDelegate) {
         self._pythonObject.show(app)
     }
 
@@ -425,12 +555,22 @@ public class OCDialog : OCControl {
         self._pythonObject.hide()
     }
 
-    public func onConfirm(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.confirm_dialog.do(PythonInstanceMethod(function))
+    public func onConfirm(_ function: @escaping (any OCControlClickable) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            let button = self.confirmButton
+            function(button)
+            return Python.None
+        }
+        self._pythonObject.confirm_dialog.do(PythonInstanceMethod(pythonFunction))
     }
     
-    public func onCancel(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.cancel_dialog.do(PythonInstanceMethod(function))
+    public func onCancel(_ function: @escaping (any OCControlClickable) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            let button = self.cancelButton
+            function(button)
+            return Python.None
+        }
+        self._pythonObject.cancel_dialog.do(PythonInstanceMethod(pythonFunction))
     }
 
 }
@@ -458,6 +598,16 @@ public class OCListItem : OCControl {
 
 /// A list of items, each presented on its own row.
 public class OCListView : OCControl, OCControlChangeable {
+    public func onChange(_ function: @escaping (any OCControlChangeable, OCListItem) -> (Void)) {
+        let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
+            function(self, self.selectedItem!)
+            return Python.None
+        }
+        self._pythonObject.onselection.do(PythonInstanceMethod(pythonFunction))
+    }
+    
+    public typealias NewValue = OCListItem
+    
 
     public init(selectable: Bool? = nil) {
         super.init(_pythonObject: GUI.ListView(selectable: selectable ?? true))
@@ -500,7 +650,7 @@ public class OCListView : OCControl, OCControlChangeable {
 
 
 /// Private: methods common to OCHBox and OCVBox.
-fileprivate protocol OCLayout {
+public protocol OCLayout {
     var _pythonObject: PythonObject { get }
     var children: [String: PythonObject] { get }
 }
@@ -528,8 +678,10 @@ public class OCVBox : OCControl, OCLayout {
 
 
 
-public protocol OCAppDelegate {
-    func main(_ mainArgs: [PythonObject]) -> PythonObject
+public protocol OCAppDelegate : PythonConvertible {
+    func _main(_ mainArgs: [PythonObject]) -> PythonObject
+    func main(app: OCAppDelegate) -> OCControl
+    func close()
 }
 
 /// An application built with Remi.
@@ -551,14 +703,18 @@ public protocol OCAppDelegate {
 /// ```
 /// Finally, run `.start()` on an instance of this class to run the program. Usually, this is the last line in your code.
 open class OCApp : OCAppDelegate {
-
-    public init() {}
-
+    public var pythonObject: PythonObject {
+        return self._app
+    }
+    
+    private var _server: PythonObject = Python.None
+    fileprivate var _app: PythonObject = Python.None
+    
     /// Start the program.
     public func start() {
         // Add the Swift `main` method to the Python subclass.
         var members = self.members
-        members["main"] = PythonInstanceMethod(self.main).pythonObject
+        members["main"] = PythonInstanceMethod(self._main).pythonObject
 
         // Import the styles.css file via the Python subclass' `__init__` method.
         let resPath = FileManager.default.currentDirectoryPath + "/res"
@@ -571,7 +727,19 @@ open class OCApp : OCAppDelegate {
         let convertedMembers = members.reduce(into: [String: PythonObject]()) { result, pair in
             result[pair.key] = PythonObject(pair.value)
         }
-        Remi.start(PythonClass("\(type(of: self))", superclasses: [Remi.App], members: convertedMembers))
+        
+        self._server = Remi.Server(gui_class: PythonClass("\(type(of: self))", superclasses: [Remi.App], members: convertedMembers), start: false, port: 1234)
+        
+        self._server.start()
+        self._server.serve_forever()
+    }
+    
+    public func close() {
+        let stopDialog = OCDialog(title: "Program stopped", message: "It is now safe to close this tab.")
+        stopDialog.cancelButton.visible = false
+        stopDialog.confirmButton.visible = false
+        stopDialog.show(in: self)
+        print(self._server.stop())
     }
 
     fileprivate var members: [String: PythonConvertible] {
@@ -584,32 +752,36 @@ open class OCApp : OCAppDelegate {
         }).filter { $0.key != "_INVALID" && !$0.key.contains("members") }
         return dictionary
     }
+    
+    public func _main(_ mainArgs: [PythonObject]) -> PythonObject {
+        self._app = mainArgs[0]
+        return self.main(app: self).pythonObject
+    }
 
     /// Override this method by copying the signature, prefixed with `override`. See the `OCApp` documentation for an example.
     ///
-    /// You must use the `.pythonObject` property after the instance that you wish to return for compatibility with Remi.
     /// If this method is not overridden, it will display a Quit button.
-    open func main(_ mainArgs: [PythonObject]) -> PythonObject {
+    open func main(app: OCAppDelegate) -> OCControl {
         let label = OCLabel(text: "Override the main method to create a GUI. Copy the example code below to get started.")
 
         let textArea = OCTextArea()
         textArea.text = """
-        override public func main(_ mainArgs: [PythonObject]) -> PythonObject {
+        override open func main(app: OCAppDelegate) -> OCControl {
             // Set up the GUI. You can refer to class constants and variables.
             let vBox: OCVBox = OCVBox(controls: [
                 OCTextField(hint: "Type here"),
-                OCButton("OK"), OCButton("Cancel")
+                OCButton(text: "OK"), OCButton(text: "Cancel")
             ])
 
             // Return the control.
-            return vBox.pythonObject
+            return vBox
         }
         """
 
         let button = OCButton(text: "Quit")
-        button.onClick { _ in mainArgs[0].close() }
+        button.onClick { _ in app.close() }
 
         let vBox = OCVBox(controls: [label, textArea, button])
-        return vBox.pythonObject
+        return vBox
     }
 }

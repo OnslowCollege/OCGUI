@@ -12,6 +12,7 @@ let package = Package(
             targets: ["OCGUI"]),
     ], dependencies: [
         .package(url: "https://github.com/pvieito/PythonKit.git", exact: "0.3.1"),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.

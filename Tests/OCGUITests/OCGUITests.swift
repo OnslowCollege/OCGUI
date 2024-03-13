@@ -37,34 +37,43 @@ final class OCGUITests: XCTestCase {
             let label6 = OCLabel(text: "Label 6:")
             let listView6 = OCListView()
             
-            override func main(_ mainArgs: [PythonObject]) -> PythonObject {
+            func onButton1Click(control: OCControlClickable) {
+                let button = control as! OCButton
+                self.label1.text = self.textField1.text
+                print(button.enabled ? "Enabled" : "Disabled")
+            }
+            
+            func onTextArea2Change(control: any OCControlChangeable, newValue: String) {
+                self.label2.text = self.textArea2.text
+            }
+            
+            override func main(app: OCAppDelegate) -> OCControl {
                 // 1.
-                button1.onClick { _ in self.label1.text = self.textField1.text; return Python.None }
+                button1.onClick(self.onButton1Click)
                 
                 // 2.
-                textArea2.onChange { _ in self.label2.text = self.textArea2.text; return Python.None }
+                textArea2.onChange(self.onTextArea2Change)
                 
                 // 3.
-                checkBox3.onChange { _ in self.dropDown3.enabled = self.checkBox3.checked; return Python.None }
-                dropDown3.onChange { _ in self.label3.text = self.dropDown3.selectedItem?.text ?? "No value"; return Python.None }
+                checkBox3.onChange { _,_  in self.dropDown3.enabled = self.checkBox3.checked }
+                dropDown3.onChange { _,_  in self.label3.text = self.dropDown3.selectedItem?.text ?? "No value" }
                 
                 // 4.
-                colorPicker4.onChange { _ in self.colorLabel4.text = self.colorPicker4.color; return Python.None }
-                datePicker4.onChange { _ in self.dateLabel4.text = self.datePicker4.dateString; return Python.None }
+                colorPicker4.onChange { _,_ in self.colorLabel4.text = self.colorPicker4.color }
+                datePicker4.onChange { _,_ in self.dateLabel4.text = self.datePicker4.dateString }
                 
                 // 5.
-                button5.onClick { _ in self.dialog5.show(in: mainArgs[0]); return Python.None }
+                button5.onClick { button in self.dialog5.show(in: app) }
                 dialog5.addField(key: "name", label: "Name:", field: self.textField5)
                 dialog5.addField(key: "dateOfBirth", label: "Date of Birth:", field: self.datePicker5)
-                dialog5.onCancel { _ in self.label5.text = "Cancelled"; return Python.None }
+                dialog5.onCancel { _ in self.label5.text = "Cancelled" }
                 dialog5.onConfirm { _ in
                     self.label5.text = "\(self.textField5.text) \(self.datePicker5.dateString)"
-                    return Python.None
                 }
                 
                 // 6.
                 for i in 1...5 { listView6.append(item: "\(i)") }
-                listView6.onChange { _ in self.label6.text = self.listView6.selectedItem?.text ?? "No value"; return Python.None }
+                listView6.onChange { _,_ in self.label6.text = self.listView6.selectedItem?.text ?? "No value" }
                 
                 
                 // Layout.
@@ -75,9 +84,13 @@ final class OCGUITests: XCTestCase {
                 let hBox5 = OCHBox(controls: [self.label5, self.button5])
                 let vBox6 = OCVBox(controls: [self.label6, self.listView6])
                 
+                // Quit button.
+                let quitButton = OCButton(text: "Quit")
+                quitButton.onClick { button in app.close() }
+                
                 // Main horizontal box.
-                let vBox = OCVBox(controls: [hBox1, vBox2, hBox3, hBox4, hBox5])
-                return OCHBox(controls: [vBox, vBox6]).pythonObject
+                let vBox = OCVBox(controls: [hBox1, vBox2, hBox3, hBox4, hBox5, quitButton])
+                return OCHBox(controls: [vBox, vBox6])
             }
         }
         
