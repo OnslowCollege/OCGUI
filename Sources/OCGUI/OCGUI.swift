@@ -2,6 +2,7 @@
 //
 // Created by Matua Doc.
 // Created on 2024-03-01.
+// Updated on 2024-03-25.
 
 import Foundation
 import PythonKit    // @pvieito == 0.3.1
@@ -53,27 +54,6 @@ public enum OCSizeUnit : CustomStringConvertible {
         guard let number = Int(numberString) else { return nil }
         self = if inPixels { .pixels(number) } else { .percent(number) }
     }
-}
-
-/// A content justification style, conforming to `justify-content` in CSS.
-public enum OCContentJustification : String {
-    /// The controls are aligned to the start of the box, usually the left.
-    case flexStart = "flex-start !important"
-
-    /// The controls are aligned to the end of the box, usually the right.
-    case flexEnd = "flex-end !important"
-
-    /// The controls are aligned to the center of the box.
-    case center = "center !important"
-
-    /// The controls are aligned to the start, center, and end. There are spaces between each.
-    case spaceBetween = "space-between !important"
-
-    /// The controls are aligned similarly to `.spaceBetween`, with spaces at the start and end.
-    case spaceAround = "space-around !important"
-
-    /// The controls are aligned similarly to `.spaceAround` with the space and control width being equal.
-    case spaceEvenly = "space-evenly !important"
 }
 
 
@@ -618,10 +598,6 @@ public class OCListView : OCControl, OCControlChangeable {
         self._pythonObject.empty()
     }
 
-    public func append(text: String) {
-        self._pythonObject.append(text)
-    }
-
     public func select(byKey key: String) {
         self._pythonObject.select_by_key(key: key)
     }
@@ -643,6 +619,10 @@ public class OCListView : OCControl, OCControlChangeable {
                 return nil
             }
         }
+    }
+
+    public func onChange(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
+        self._pythonObject.onselection.do(PythonInstanceMethod(function))
     }
 
 }
@@ -723,9 +703,6 @@ open class OCApp : OCAppDelegate {
     
     private var _server: PythonObject = Python.None
     fileprivate var _app: PythonObject = Python.None
-
-    public init() {
-    }
     
     /// Start the program.
     public func start() {
@@ -763,10 +740,11 @@ open class OCApp : OCAppDelegate {
         // Based on Ryam Heitner's answer (https://stackoverflow.com/questions/46597624/can-swift-convert-a-class-struct-data-into-dictionary)
         let mirror = Mirror(reflecting: self)
 
+        var invalidCount = 0
         let dictionary = Dictionary(uniqueKeysWithValues: mirror.children.lazy.map { (label: String?, value: Any) -> (String, PythonConvertible) in
-        guard let label = label, let value = value as? PythonConvertible else { return ("_INVALID", Python.None) }
+            guard let label = label, let value = value as? PythonConvertible else { invalidCount += 1; return ("_INVALID_\(invalidCount)", Python.None) }
         return (label, value)
-        }).filter { $0.key != "_INVALID" && !$0.key.contains("members") }
+        }).filter { !$0.key.contains("_INVALID_") && !$0.key.contains("members") }
         return dictionary
     }
     
