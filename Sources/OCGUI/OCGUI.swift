@@ -618,6 +618,10 @@ public class OCListView : OCControl, OCControlChangeable {
         self._pythonObject.empty()
     }
 
+    public func append(text: String) {
+        self._pythonObject.append(text)
+    }
+
     public func select(byKey key: String) {
         self._pythonObject.select_by_key(key: key)
     }
@@ -639,10 +643,6 @@ public class OCListView : OCControl, OCControlChangeable {
                 return nil
             }
         }
-    }
-
-    public func onChange(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.onselection.do(PythonInstanceMethod(function))
     }
 
 }
