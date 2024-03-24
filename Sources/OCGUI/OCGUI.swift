@@ -653,12 +653,18 @@ public class OCListView : OCControl, OCControlChangeable {
 public protocol OCLayout {
     var _pythonObject: PythonObject { get }
     var children: [String: PythonObject] { get }
+    func empty()
+    func append(control: OCControl)
 }
 
 extension OCLayout {
     public var children: [String: PythonObject] {
         let pythonChildren = Dictionary<String, PythonObject>(self._pythonObject.children)
         return pythonChildren!
+    }
+
+    public func empty() {
+        self._pythonObject.empty
     }
 }
 
@@ -668,11 +674,19 @@ public class OCHBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.HBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
     }
+
+    public func append(control: OCControl) {
+        self._pythonObject.append(control.pythonObject)
+    }
 }
 
 public class OCVBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.VBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
+    }
+
+    public func append(control: OCControl) {
+        self._pythonObject.append(control.pythonObject)
     }
 }
 
