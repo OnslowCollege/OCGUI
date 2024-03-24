@@ -700,6 +700,8 @@ open class OCApp : OCAppDelegate {
     public var pythonObject: PythonObject {
         return self._app
     }
+
+    public init() { }
     
     private var _server: PythonObject = Python.None
     fileprivate var _app: PythonObject = Python.None
