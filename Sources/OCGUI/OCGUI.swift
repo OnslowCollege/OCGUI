@@ -2,7 +2,6 @@
 //
 // Created by Matua Doc.
 // Created on 2024-03-01.
-// Updated on 2024-03-25.
 
 import Foundation
 import PythonKit    // @pvieito == 0.3.1
@@ -117,16 +116,22 @@ public class OCControl : PythonConvertible {
         }
     }
     
-    /// The boldness of the control. If it is false, the user will not be able to see it.
-    public var isBold: Bool {
-        get {
-            let keys = Array(self._pythonObject.style.keys())
-            // Return false by default because no controls start bold.
-            guard let weightKey = keys.first(where: { $0 == "font-weight" }) else { return false }
-            return weightKey != "none"
-        }
-        set {
-            self._pythonObject.set_style("font-weight: \(newValue ? "bold" : "normal")")
+    /// Set an OCStyle value.
+    ///
+    /// - Parameters:
+    ///     - style: an `OCStyle` enumeration.
+    public func setStyle(_ style: OCStyle) {
+        print(style.cssDictionary)
+        self._pythonObject.set_style(PythonObject(style.cssDictionary))
+    }
+    
+    /// Set multiple OCStyles at once. If a duplicate style is provided, the last one is honoured.
+    ///
+    /// - Parameters:
+    ///     - styles: an array of `OCStyle` enumerations.
+    public func setStyles(_ styles: [OCStyle]) {
+        for style in styles {
+            self.setStyle(style)
         }
     }
 
@@ -215,7 +220,7 @@ public class OCImageView : OCControl {
     /// The filename of the image.
     public var filename: String {
         get { return String(self._pythonObject.attributes["src"])! }
-        set { self._pythonObject.set_image(filename: newValue) }
+        set { self._pythonObject.set_image(filename: newValue); self._pythonObject.redraw() }
     }
 
 }
@@ -700,11 +705,12 @@ open class OCApp : OCAppDelegate {
     public var pythonObject: PythonObject {
         return self._app
     }
-
-    public init() { }
     
     private var _server: PythonObject = Python.None
     fileprivate var _app: PythonObject = Python.None
+    
+    // Only required because otherwise nobody can subclass this!
+    public init() { }
     
     /// Start the program.
     public func start() {
@@ -744,10 +750,18 @@ open class OCApp : OCAppDelegate {
 
         var invalidCount = 0
         let dictionary = Dictionary(uniqueKeysWithValues: mirror.children.lazy.map { (label: String?, value: Any) -> (String, PythonConvertible) in
-            guard let label = label, let value = value as? PythonConvertible else { invalidCount += 1; return ("_INVALID_\(invalidCount)", Python.None) }
-        return (label, value)
-        }).filter { !$0.key.contains("_INVALID_") && !$0.key.contains("members") }
-        return dictionary
+            guard let label = label, let value = value as? PythonConvertible else {
+                // Incompatible object found.
+                invalidCount += 1
+                return ("Non-PythonObject #\(invalidCount): \(label ?? "_")", Python.None)
+            }
+            
+            // Return the Python-compatible object.
+            return (label, value)
+        })
+        
+        // Only return Python-compatible members.
+        return dictionary.filter { !$0.key.contains("Non-PythonObject #") && !$0.key.contains("members") }
     }
     
     public func _main(_ mainArgs: [PythonObject]) -> PythonObject {
@@ -757,7 +771,7 @@ open class OCApp : OCAppDelegate {
 
     /// Override this method by copying the signature, prefixed with `override`. See the `OCApp` documentation for an example.
     ///
-    /// If this method is not overridden, it will display a Quit button.
+    /// If this method is not overridden, it will display a default layout explaining how to use it.
     open func main(app: OCAppDelegate) -> OCControl {
         let label = OCLabel(text: "Override the main method to create a GUI. Copy the example code below to get started.")
 
