@@ -649,7 +649,11 @@ extension OCLayout {
     }
 
     public func empty() {
-        self._pythonObject.empty
+        self._pythonObject.empty()
+    }
+
+    public func append(control: OCControl) {
+        self._pythonObject.append(control.pythonObject)
     }
 }
 
@@ -659,19 +663,11 @@ public class OCHBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.HBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
     }
-
-    public func append(control: OCControl) {
-        self._pythonObject.append(control.pythonObject)
-    }
 }
 
 public class OCVBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.VBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
-    }
-
-    public func append(control: OCControl) {
-        self._pythonObject.append(control.pythonObject)
     }
 }
 
