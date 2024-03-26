@@ -1,7 +1,7 @@
 // OCStyle.
 //
 // Created by Matua Doc.
-// Created on 2024-03-25.
+// Created on 2024-03-16.
 
 import Foundation
 
@@ -61,24 +61,29 @@ public enum OCStyle {
         }
     }
     
-    public var cssDictionary: [String: String] {
+    package var cssDictionary: [String: String] {
         let value = switch self {
         case .fontFamily(let family):
-            family.description
+            family.cssValue
         case .fontSize(let int), .borderWidth(let int), .borderRadius(let int):
             "\(int)px"
         case .fontWeight(let weight):
-            weight.description
+            weight.cssValue
         case .borderStyle(let style):
-            style.description
+            style.cssValue
         case .backgroundColor(let color), .foregroundColor(let color), .borderColor(let color):
-            color.description
+            color.cssValue
         }
         return [self.cssName: value]
     }
 }
 
-public enum OCColor : CustomStringConvertible {
+/// A type-safe representation of colours used for fonts, backgrounds, and borders.
+/// To specify a custom, use OCColor.rgb or OCColor.rgba.
+public enum OCColor {
+    // No colour.
+    case transparent
+    
     // Basic colours.
     case black
     case silver
@@ -231,38 +236,64 @@ public enum OCColor : CustomStringConvertible {
     case yellowGreen
     
     
-    // Custom.
-    case hexCode(String)
+    /// A custom RGB colour. Each number (0 to 255) represents red, green, and blue channels respectively.
+    case rgb(UInt8, UInt8, UInt8)
     
-    public var description: String {
-        switch self {
-        case .hexCode(let hex): return hex
-        default: return "\(self)".lowercased()
+    /// A custom RGB colour with alpha channel.
+    /// The first three numbers (0 to 255) represent red, green, and blue channels respectively.
+    /// The final number (0.0 to 1.0) represents the alpha channel. 0.0 is transparent, 1.0 is opaque.
+    case rgba(UInt8, UInt8, UInt8, Double)
+    
+    package var cssValue: String {
+        guard let child = Mirror(reflecting: self).children.first, let label = child.label else {
+            return "\(self)"
         }
+        return "\(label)\(child.value)"
     }
 }
 
-public enum OCFontFamily : CustomStringConvertible {
+/// A type-safe representation of a font family, used for buttons, labels, etc.
+public enum OCFontFamily {
+    /// The default sans-serif font. On Windows, this is Arial. On macOS, this is Helvetica.
     case sansSerif
+    
+    /// The default serif font. On Windows, this is Times New Roman. On macOS, this is Times.
     case serif
+    
+    /// The default monospace font. On most platforms, this is Courier or Courier Mono.
     case monospace
+    
+    /// A specified font family name.
     case byName(String)
     
-    public var description: String {
-        switch self {
-        case .sansSerif: return "sans-serif"
-        case .byName(let family): return "\(family)"
-        default: return "\(self)"
+    package var cssValue: String {
+        guard let child = Mirror(reflecting: self).children.first else {
+            if case .sansSerif = self {
+                return "sans-serif"
+            } else {
+                return "\(self)"
+            }
         }
+        return "\(child.value)"
     }
 }
 
-public enum OCFontWeight : CustomStringConvertible {
+/// A type-safe representation of font weights used for buttons, labels, etc.
+public enum OCFontWeight {
+    /// Thin text.
     case lighter
+    
+    /// Regular text.
     case normal
+    
+    /// Bold text.
     case bold
+    
+    /// Heavy text.
     case bolder
-    case custom(Int)
+    
+    /// A custom weight. Minimum is 0, maximum is 900.
+    case custom(UInt16)
     
     public var description: String {
         switch self {
@@ -270,14 +301,30 @@ public enum OCFontWeight : CustomStringConvertible {
         default: return "\(self)"
         }
     }
+    
+    public var cssValue: String {
+        guard let child = Mirror(reflecting: self).children.first else {
+            return "\(self)"
+        }
+        return "\(child.value)"
+    }
 }
 
-public enum OCBorderStyle : String, CustomStringConvertible {
+/// A type-safe representation of a border style.
+public enum OCBorderStyle : String {
+    /// No border.
     case none
+    
+    /// A dotted line.
     case dotted
+    
+    /// A dashed line.
     case dashed
     
-    public var description: String {
-        return "\(self)"
+    /// A solid, uninterrupted line.
+    case solid
+    
+    package var cssValue: String {
+        return self.rawValue
     }
 }
