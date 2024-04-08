@@ -1,4 +1,4 @@
-﻿@charset "UTF-8";
+@charset "UTF-8";
 /* latin */
 
 body {
@@ -51,14 +51,18 @@ html {
 }
 
 .remi-main {
-    max-width: 80%;
-    min-width: 50%;
-    margin: 32px auto auto auto;
-    padding: 0 8px 0 0px;
-    font-family: "Helvetica", "Arial", sans-serif;
-    font-size: 14px;
+    width: 640px;
+    margin: 0 auto;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
+    font-size: 12pt;
     font-weight: 400;
-    border: 4px solid #0831d9;
+    background: repeating-linear-gradient(
+        to bottom,
+        #FEFEFE,
+        #FEFEFE 2px,
+        #F0F0F0 2px,
+        #F0F0F9 4px
+    );
 }
 
 *[hidden] {
@@ -82,7 +86,7 @@ html {
 .remi-main h4 small,
 .remi-main h5 small,
 .remi-main h6 small {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     font-weight: 400;
     line-height: 1.35;
     letter-spacing: -.02em;
@@ -99,7 +103,7 @@ html {
 
 .remi-main h1,
 .remi-main h2 {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     font-weight: 400
 }
 
@@ -120,7 +124,7 @@ html {
 
 .remi-main h3,
 .remi-main h4 {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     font-weight: 400
 }
 
@@ -140,7 +144,7 @@ html {
 
 .remi-main h5,
 .remi-main h6 {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     margin: 24px 0 16px
 }
 
@@ -166,7 +170,7 @@ html {
 }
 
 .remi-main blockquote {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     position: relative;
     font-size: 170%;
     font-weight: 300;
@@ -217,15 +221,22 @@ html {
     z-index: 1;
 }
 
-body.remi-main>div {
-    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12), 0 2px 4px -1px rgba(0, 0, 0, .2);
+.remi-main div {
+    padding: 8px 0;
+    z-index: 0;
+    width: 640px;
 }
 
-.remi-main div {
-    background-color: #ece9d8;
-    padding: 0 4px;
-    z-index: 0;
-    width: 100%;
+.remi-main .HBox {
+    justify-content: center !important;
+    align-items: stretch !important;
+    column-gap: 16px !important;
+}
+
+
+.remi-main .VBox {
+    justify-content: start !important;
+    align-items: start !important;
 }
 
 .remi-main>* {
@@ -238,13 +249,15 @@ body.remi-main>div {
 }
 
 .remi-main .ListView {
-    border: none;
+    border: 1px solid #BBB;
     padding: 0;
+    margin: 10px 0;
     background-color: white;
     cursor: default;
     overflow: auto;
     list-style: none;
-    min-width: calc(100% - 8px);
+    min-width: 50%;
+    box-shadow: inset 1px 1px #999;
 }
 
 .remi-main option:hover {
@@ -256,6 +269,7 @@ body.remi-main>div {
     background-color: transparent;
     border-bottom: transparent;
     margin: 4px;
+    padding: 4px;
     min-width: calc(100% - 8px);
 }
 
@@ -306,29 +320,23 @@ body.remi-main>div {
 }
 
 .remi-main button {
-    border: 1px solid #003c74;
-    border-radius: 3px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(200, 200, 200, 0.25);
+    /* -webkit-backdrop-filter: blur(1px); */
     color: #000;
-    position: relative;
-    margin: 8px;
-    padding: 4px 4px;
-    display: inline-block;
-    font-weight: 500;
-    letter-spacing: 0;
-    overflow: hidden;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    outline: none;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    box-shadow: inset 0 12px 2px rgba(255,255,255,0.5), 0 0px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    text-decoration: none;
-    text-align: center;
-    vertical-align: middle;
-    background: linear-gradient(180deg,
-            rgba(255, 255, 255, 1) 0%,
-            rgba(236, 235, 229, 1) 86%,
-            rgba(216, 208, 196, 1) 100%);
-    box-shadow: none;
-    min-width: fit-content;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
+    font-size: 12pt;
+    line-height: 12pt;
+    margin: 8px;
+    padding: 8px;
+    position: relative;
+    min-width: 100px;
+    height: 32px;
 }
 
 @keyframes remi-main-outline-animation {
@@ -347,26 +355,17 @@ body.remi-main>div {
 }
 
 .remi-main button:disabled {
-    background-color: #ddd;
-    background: #ddd;
-    border: 1px solid #ddd;
-    box-shadow: none;
-    cursor: default;
-    color: #9F9F9F;
+    color: #bbb;
+    opacity: 0.8;
 }
 
 .remi-main button:active {
-    background: linear-gradient(180deg,
-            rgba(205, 202, 195, 1) 0%,
-            rgba(227, 227, 219, 1) 8%,
-            rgba(229, 229, 222, 1) 94%,
-            rgba(242, 242, 241, 1) 100%);
-    box-shadow: none;
+    background: #4A90E2;
 }
 
 .remi-main .TextInput {
     display: block;
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
     margin: 8px;
     padding: 0;
     width: 100%;
@@ -653,44 +652,8 @@ body.remi-main>div {
 }
 
 .remi-main #loading-animation {
-    width: 40px;
-    height: 40px;
     background-color: rgb(2, 70, 147);
-
-    margin: 100px auto;
-    -webkit-animation: sk-rotateplane 1.2s infinite ease-in-out;
-    animation: sk-rotateplane 1.2s infinite ease-in-out;
-}
-
-@-webkit-keyframes sk-rotateplane {
-    0% {
-        -webkit-transform: perspective(120px)
-    }
-
-    50% {
-        -webkit-transform: perspective(120px) rotateY(180deg)
-    }
-
-    100% {
-        -webkit-transform: perspective(120px) rotateY(180deg) rotateX(180deg)
-    }
-}
-
-@keyframes sk-rotateplane {
-    0% {
-        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
-        -webkit-transform: perspective(120px) rotateX(0deg) rotateY(0deg)
-    }
-
-    50% {
-        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
-        -webkit-transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg)
-    }
-
-    100% {
-        transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
-        -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
-    }
+    opacity: 0.2;
 }
 
 .remi-main .TabBox {
@@ -721,36 +684,6 @@ body.remi-main>div {
     content: "";
     display: table;
     clear: both;
-}
-
-@media only screen and (max-width: 320px) {
-    .remi-main {
-        font-size: 12px;
-    }
-
-    .remi-main button {
-        padding: 0 2px;
-        font-size: 12px;
-    }
-
-    .remi-main select {
-        font-size: 12px;
-    }
-}
-
-@media only screen and (max-width: 360px) {
-    .remi-main {
-        font-size: 13px;
-    }
-
-    .remi-main button {
-        padding: 0 2px;
-        font-size: 13px;
-    }
-
-    .remi-main select {
-        font-size: 13px;
-    }
 }
 
 .remi-main ul.TreeView {
