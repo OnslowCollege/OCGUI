@@ -19,7 +19,7 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "OCGUI",
-            dependencies: [.byName(name: "PythonKit")]
+            dependencies: ["PythonKit"]
         ),
         .testTarget(
             name: "OCGUITests",

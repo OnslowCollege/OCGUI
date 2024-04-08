@@ -11,21 +11,10 @@ let GUI = Python.import("remi.gui")
 
 // MARK: - Convenience
 
-/// The size of widgets.
-///
-/// Each of the members use the OCSizeUnit enum in order to represent pixel sizes or percentage sizes, depending on which is used.
-public struct OCSize {
-    /// The width. Use `.pixels(x)` or `.percent(x)` in the initializer for this struct, replacing `x` with the desired integer size.
-    let width: OCSizeUnit
-    
-    /// The height. Use `.pixels(x)` or `.percent(x)` in the initializer for this struct, replacing `x` with the desired integer size.
-    let height: OCSizeUnit
-}
-
-/// A unit of measurement for the OCSize struct.
+/// A unit of measurement for the setting the size of a control.
 ///
 /// A size unit can be **either** in pixels or a percentage, but not both.
-public enum OCSizeUnit : CustomStringConvertible {
+public enum OCSize : CustomStringConvertible {
     /// The size in pixels.
     case pixels(Int)
     
@@ -53,27 +42,6 @@ public enum OCSizeUnit : CustomStringConvertible {
         guard let number = Int(numberString) else { return nil }
         self = if inPixels { .pixels(number) } else { .percent(number) }
     }
-}
-
-/// A content justification style, conforming to `justify-content` in CSS.
-public enum OCContentJustification : String {
-    /// The controls are aligned to the start of the box, usually the left.
-    case flexStart = "flex-start !important"
-
-    /// The controls are aligned to the end of the box, usually the right.
-    case flexEnd = "flex-end !important"
-
-    /// The controls are aligned to the center of the box.
-    case center = "center !important"
-
-    /// The controls are aligned to the start, center, and end. There are spaces between each.
-    case spaceBetween = "space-between !important"
-
-    /// The controls are aligned similarly to `.spaceBetween`, with spaces at the start and end.
-    case spaceAround = "space-around !important"
-
-    /// The controls are aligned similarly to `.spaceAround` with the space and control width being equal.
-    case spaceEvenly = "space-evenly !important"
 }
 
 
@@ -137,31 +105,50 @@ public class OCControl : PythonConvertible {
         }
     }
     
-    /// The boldness of the control. If it is false, the user will not be able to see it.
-    public var isBold: Bool {
-        get {
-            let keys = Array(self._pythonObject.style.keys())
-            // Return false by default because no controls start bold.
-            guard let weightKey = keys.first(where: { $0 == "font-weight" }) else { return false }
-            return weightKey != "none"
-        }
-        set {
-            self._pythonObject.set_style("font-weight: \(newValue ? "bold" : "normal")")
+    /// Set an OCStyle value.
+    ///
+    /// - Parameters:
+    ///     - style: an `OCStyle` enumeration.
+    public func setStyle(_ style: OCStyle) {
+        print(style.cssDictionary)
+        self._pythonObject.set_style(PythonObject(style.cssDictionary))
+    }
+    
+    /// Set multiple OCStyles at once. If a duplicate style is provided, the last one is honoured.
+    ///
+    /// - Parameters:
+    ///     - styles: an array of `OCStyle` enumerations.
+    public func setStyles(_ styles: [OCStyle]) {
+        for style in styles {
+            self.setStyle(style)
         }
     }
+    
+    private func getSize(width: Bool) -> OCSize? {
+        let key = width ? "width" : "height"
+        let keys = Array(self._pythonObject.style.keys()).map { String($0) }
+        guard keys.contains(key) else { return nil }
+        return OCSize(fromString: String(self._pythonObject.style[key])!)!
+    }
 
-    /// The size of the control. If no size is defined (which is true of most controls by default), this returns nil.
-    public var size: OCSize? {
+    /// The width of the control. If no size is defined (which is true of most controls by default), this returns nil.
+    public var width: OCSize? {
         get {
-            let keys = Array(self._pythonObject.style.keys())
-            guard keys.contains("width"), keys.contains("height") else { return nil }
-            let width = OCSizeUnit(fromString: String(self._pythonObject.style["width"])!)!
-            let height = OCSizeUnit(fromString: String(self._pythonObject.style["height"])!)!
-            return OCSize(width: width, height: height)
+            return getSize(width: true)
         } set {
             if let newValue = newValue {
-                self._pythonObject.set_size(width: newValue.width.description, height: newValue.height.description)
-                self._pythonObject.redraw()
+                self._pythonObject.set_size(width: newValue.description, height: Python.None)
+            }
+        }
+    }
+    
+    /// The height of the control. If no size is defined (which is true of most controls by default), this returns nil.
+    public var height: OCSize? {
+        get {
+            return getSize(width: false)
+        } set {
+            if let newValue = newValue {
+                self._pythonObject.set_size(width: Python.None, height: newValue.description)
             }
         }
     }
@@ -187,6 +174,7 @@ extension OCTextConvertible where Self: OCControl {
         set { self._pythonObject.set_text(newValue); self._pythonObject.redraw() }
     }
 }
+
 
 
 // MARK: - Controls
@@ -235,7 +223,7 @@ public class OCImageView : OCControl {
     /// The filename of the image.
     public var filename: String {
         get { return String(self._pythonObject.attributes["src"])! }
-        set { self._pythonObject.set_image(filename: newValue) }
+        set { self._pythonObject.set_image(filename: newValue); self._pythonObject.redraw() }
     }
 
 }
@@ -253,7 +241,6 @@ public class OCTextField : OCControl, OCTextConvertible, OCControlChangeable {
     }
     
     public typealias NewValue = String
-    
     
     /// Create a text field. If the hint parameter has an argument, that text is shown in light grey
     /// until the user starts typing in the field.
@@ -288,7 +275,8 @@ public class OCTextArea : OCControl, OCTextConvertible, OCControlChangeable {
     /// until the user starts typing in the area.
     public init(hint: String = "") {
         super.init(_pythonObject: GUI.TextInput(single_line: false, hint: hint))
-        self.size = OCSize(width: OCSizeUnit.percent(100), height: OCSizeUnit.pixels(200))
+        self.width = OCSize.percent(100)
+        self.height = OCSize.pixels(200)
     }
 
     /// The text present in the text area.
@@ -508,6 +496,12 @@ public class OCDropDown : OCControl, OCControlChangeable {
 /// A dialog window.
 public class OCDialog : OCControl {
     
+    private var _fields: [String: OCControl] = [:]
+    
+    private enum OCDialogError : Error {
+        case keyAlreadyUsed
+    }
+    
     /// The confirm button.
     fileprivate var confirmButton: OCButton {
         return OCButton(_pythonObject: self._pythonObject.conf)
@@ -524,23 +518,21 @@ public class OCDialog : OCControl {
     }
 
     /// Add an OCControl with the specified key.
-    public func addField(key: String, field: OCControl) {
+    public func addField(key: String, field: OCControl) throws {
+        self._fields[key] = field
         self._pythonObject.add_field(key: key, field: field)
     }
 
     /// Add an OCControl and label with the specified key.
-    public func addField(key: String, label: String, field: OCControl) {
+    public func addField(key: String, label: String, field: OCControl) throws {
+        if self._fields.keys.contains(key) { throw OCDialogError.keyAlreadyUsed }
+        self._fields[key] = field
         self._pythonObject.add_field_with_label(key: key, label_description: label, field: field)
     }
-
-    /// Get a field with a specified key. Returns nil if not such item exists.
-    public func getField(forKey key: String) -> OCControl? {
-        let pythonObject = self._pythonObject.get_field(key: key)
-        if pythonObject != Python.None {
-            return OCControl(_pythonObject: pythonObject)
-        } else {
-            return nil
-        }
+    
+    /// All available fields.
+    public var fields: [String: OCControl] {
+        return self._fields
     }
 
     /// Show the dialog.
@@ -608,43 +600,83 @@ public class OCListView : OCControl, OCControlChangeable {
     
     public typealias NewValue = OCListItem
     
+    private enum OCListViewError : Error {
+        case noSuchIndex
+        case noSuchText
+        case selectionWhenNotSelectable
+    }
+    
+    private var _items: [String] = []
+    
+    /// Whether the list view items are selectable.
+    ///
+    /// If false, the `select` methods throw `OCListViewError.selectionWhenNotSelectable`.
+    public var selectable: Bool
 
-    public init(selectable: Bool? = nil) {
-        super.init(_pythonObject: GUI.ListView(selectable: selectable ?? true))
-        self.size = OCSize(width: .percent(100), height: .percent(100))
+    public init(selectable: Bool? = nil, items: [String]? = nil) {
+        self.selectable = selectable ?? true
+        super.init(_pythonObject: GUI.ListView(selectable: self.selectable))
+        self.width = .percent(100)
+        self.height = .percent(100)
+        if let items = items {
+            self._items = items
+            for item in items {
+                self.append(item: item)
+            }
+        }
+    }
+    
+    /// Add a new item to the list. If the key is not overridden, it is the index of the item.
+    override public func append(item: String, key: String? = nil) {
+        self._items.append(item)
+        self._pythonObject.append(value: item, key: key ?? "\(self._items.count - 1)")
+    }
+    
+    /// Remove an item from the control based on its index.
+    ///
+    /// Throws `OCListViewError.noSuchIndex` if an invalid index is specified.
+    public func remove(at index: Int) throws {
+        guard index >= self._items.count, index < 0 else { throw OCListViewError.noSuchIndex }
+        self._items.remove(at: index)
+        self.empty()
+        for item in self._items {
+            self.append(item: item)
+        }
     }
 
+    /// Remove all of the list items.
     public func empty() {
         self._pythonObject.empty()
     }
 
-    public func select(byKey key: String) {
-        self._pythonObject.select_by_key(key: key)
+    /// Select an item by its key.
+    public func select(at index: Int) throws {
+        guard self.selectable else { throw OCListViewError.selectionWhenNotSelectable }
+        guard index >= self._items.count, index < 0 else { throw OCListViewError.noSuchIndex }
+        self._pythonObject.select_by_key(key: "\(index)")
     }
 
-    public func select(byText text: String) {
+    /// Select an item by the displayed text.
+    public func select(by text: String) throws {
+        guard self.selectable else { throw OCListViewError.selectionWhenNotSelectable }
         self._pythonObject.select_by_value(value: text)
     }
 
-    public func select(item: OCListItem) {
-        self._pythonObject.select_by_value(item.text)
-    }
-
+    /// The selected item. This is returned as an `OCListItem`, similar to Remi's `ListItem` object.
+    /// If not item is selected, this returns nil.
+    ///
+    /// To access the item's text, use `.text`.
     public var selectedItem: OCListItem? {
-        get {
-            let pythonObject = self._pythonObject.get_item()
-            if pythonObject != Python.None {
-                return OCListItem(pythonObject: pythonObject)
-            } else {
-                return nil
-            }
-        }
+        let pythonObject = self._pythonObject.get_item()
+        guard pythonObject != Python.None else { return nil }
+        return OCListItem(pythonObject: pythonObject)
     }
-
-    public func onChange(_ function: @escaping ([PythonObject]) -> (PythonObject)) {
-        self._pythonObject.onselection.do(PythonInstanceMethod(function))
+    
+    /// The index of the selected item. If not item is selected, this returns nil.
+    public var selectedIndex: Int? {
+        guard let selectedItem = self.selectedItem else { return nil }
+        return self._items.firstIndex(of: selectedItem.text)
     }
-
 }
 
 
@@ -653,12 +685,18 @@ public class OCListView : OCControl, OCControlChangeable {
 public protocol OCLayout {
     var _pythonObject: PythonObject { get }
     var children: [String: PythonObject] { get }
+    func empty()
+    func append(control: OCControl)
 }
 
 extension OCLayout {
     public var children: [String: PythonObject] {
         let pythonChildren = Dictionary<String, PythonObject>(self._pythonObject.children)
         return pythonChildren!
+    }
+
+    public func empty() {
+        self._pythonObject.empty()
     }
 }
 
@@ -668,11 +706,19 @@ public class OCHBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.HBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
     }
+
+    public func append(control: OCControl) {
+        self._pythonObject.append(control.pythonObject)
+    }
 }
 
 public class OCVBox : OCControl, OCLayout {
     public init(controls: [OCControl], justifyContent: OCContentJustification? = nil) {
         super.init(_pythonObject: GUI.VBox(controls.map { $0.pythonObject }, style: PythonObject(["justify-content": justifyContent?.rawValue ?? "space-around"])))
+    }
+
+    public func append(control: OCControl) {
+        self._pythonObject.append(control.pythonObject)
     }
 }
 
@@ -690,15 +736,15 @@ public protocol OCAppDelegate : PythonConvertible {
 ///
 /// For example:
 /// ```swift
-/// override public func main(_ mainArgs: [PythonObject]) -> PythonObject {
+/// override public func main(app: OCAppDelegate) -> OCControl {
 ///     // Set up the GUI. You can refer to class constants and variables.
 ///     let vBox: OCVBox = OCVBox(controls: [
 ///         OCTextField(hint: "Type here"),
-///         OCButton("OK"), OCButton("Cancel")
+///         OCButton(text: "OK"), OCButton(text: "Cancel")
 ///     ])
 ///
 ///     // Return the control.
-///     return vBox.pythonObject
+///     return vBox
 /// }
 /// ```
 /// Finally, run `.start()` on an instance of this class to run the program. Usually, this is the last line in your code.
@@ -709,6 +755,9 @@ open class OCApp : OCAppDelegate {
     
     private var _server: PythonObject = Python.None
     fileprivate var _app: PythonObject = Python.None
+    
+    // Only required because otherwise nobody can subclass this!
+    public init() { }
     
     /// Start the program.
     public func start() {
@@ -734,6 +783,7 @@ open class OCApp : OCAppDelegate {
         self._server.serve_forever()
     }
     
+    /// End the program immediately.
     public func close() {
         let stopDialog = OCDialog(title: "Program stopped", message: "It is now safe to close this tab.")
         stopDialog.cancelButton.visible = false
@@ -746,11 +796,20 @@ open class OCApp : OCAppDelegate {
         // Based on Ryam Heitner's answer (https://stackoverflow.com/questions/46597624/can-swift-convert-a-class-struct-data-into-dictionary)
         let mirror = Mirror(reflecting: self)
 
+        var invalidCount = 0
         let dictionary = Dictionary(uniqueKeysWithValues: mirror.children.lazy.map { (label: String?, value: Any) -> (String, PythonConvertible) in
-        guard let label = label, let value = value as? PythonConvertible else { return ("_INVALID", Python.None) }
-        return (label, value)
-        }).filter { $0.key != "_INVALID" && !$0.key.contains("members") }
-        return dictionary
+            guard let label = label, let value = value as? PythonConvertible else {
+                // Incompatible object found.
+                invalidCount += 1
+                return ("Non-PythonObject #\(invalidCount): \(label ?? "_")", Python.None)
+            }
+            
+            // Return the Python-compatible object.
+            return (label, value)
+        })
+        
+        // Only return Python-compatible members.
+        return dictionary.filter { !$0.key.contains("Non-PythonObject #") && !$0.key.contains("members") }
     }
     
     public func _main(_ mainArgs: [PythonObject]) -> PythonObject {
@@ -760,7 +819,7 @@ open class OCApp : OCAppDelegate {
 
     /// Override this method by copying the signature, prefixed with `override`. See the `OCApp` documentation for an example.
     ///
-    /// If this method is not overridden, it will display a Quit button.
+    /// If this method is not overridden, it will display a default layout explaining how to use it.
     open func main(app: OCAppDelegate) -> OCControl {
         let label = OCLabel(text: "Override the main method to create a GUI. Copy the example code below to get started.")
 

@@ -64,8 +64,8 @@ final class OCGUITests: XCTestCase {
                 
                 // 5.
                 button5.onClick { button in self.dialog5.show(in: app) }
-                dialog5.addField(key: "name", label: "Name:", field: self.textField5)
-                dialog5.addField(key: "dateOfBirth", label: "Date of Birth:", field: self.datePicker5)
+                try! dialog5.addField(key: "name", label: "Name:", field: self.textField5)
+                try! dialog5.addField(key: "dateOfBirth", label: "Date of Birth:", field: self.datePicker5)
                 dialog5.onCancel { _ in self.label5.text = "Cancelled" }
                 dialog5.onConfirm { _ in
                     self.label5.text = "\(self.textField5.text) \(self.datePicker5.dateString)"
