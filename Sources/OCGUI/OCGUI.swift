@@ -319,7 +319,7 @@ public class OCCheckBox : OCControl, OCControlChangeable {
 
 /// A color picker.
 public class OCColorPicker : OCControl, OCControlChangeable {
-    public func onChange(_ function: @escaping (any OCControlChangeable, String) -> (Void)) {
+    public func onChange(_ function: @escaping (any OCControlChangeable, OCColor) -> (Void)) {
         let pythonFunction: ([PythonObject]) -> (PythonObject) = { args in
             function(self, self.color)
             return Python.None
@@ -327,7 +327,7 @@ public class OCColorPicker : OCControl, OCControlChangeable {
         self._pythonObject.onchange.do(PythonInstanceMethod(pythonFunction))
     }
     
-    public typealias NewValue = String
+    public typealias NewValue = OCColor
     
 
     /// Create a color picker.
@@ -338,10 +338,12 @@ public class OCColorPicker : OCControl, OCControlChangeable {
         super.init(_pythonObject: GUI.ColorPicker(default_value: defaultColor ?? "#995500"))
     }
 
-    /// The currently-selected color.
-    public var color: String {
-        get { return String(self._pythonObject.get_value())! }
-        set { self._pythonObject.set_value(newValue); self._pythonObject.redraw() }
+    /// The currently-selected color as a hex code.
+    ///
+    /// When setting the hex code, include the `#` sign at the beginning. Your code may crash if this is omitted.
+    public var color: OCColor {
+        get { return .hex(String(self._pythonObject.get_value())!) }
+        set { self._pythonObject.set_value(newValue.cssValue); self._pythonObject.redraw() }
     }
 
 }
