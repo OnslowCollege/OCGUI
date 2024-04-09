@@ -235,6 +235,9 @@ public enum OCColor {
     case whiteSmoke
     case yellowGreen
     
+    /// A custom hex code.
+    case hex(String)
+    
     
     /// A custom RGB colour. Each number (0 to 255) represents red, green, and blue channels respectively.
     case rgb(UInt8, UInt8, UInt8)
