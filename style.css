@@ -376,7 +376,7 @@ select {
 }
 
 select:disabled {
-    opacity: 0.5;
+    opacity: 0.9;
     filter: saturate(0);
 }
 
