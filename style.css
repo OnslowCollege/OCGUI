@@ -5,13 +5,11 @@ body {
     background-color: #3B6EA5;
 }
 
-.remi-main textarea:focus,
 .remi-main input[type='checkbox']:focus,
 .remi-main input[type='color']:focus,
 .remi-main input[type='number']:focus,
 .remi-main input[type='text']:focus,
-.remi-main input[type='date']:focus,
-.remi-main select:focus {
+.remi-main input[type='date']:focus {
     border: 0px;
     outline: 0px;
     box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .14);
@@ -51,18 +49,12 @@ html {
 }
 
 .remi-main {
-    width: 640px;
-    margin: 0 auto;
+    display: flex;
+    align-content: center;
+    justify-content: center;
     font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
-    font-size: 12pt;
+    font-size: 14pt;
     font-weight: 400;
-    background: repeating-linear-gradient(
-        to bottom,
-        #FEFEFE,
-        #FEFEFE 2px,
-        #F0F0F0 2px,
-        #F0F0F9 4px
-    );
 }
 
 *[hidden] {
@@ -161,7 +153,6 @@ html {
 
 .remi-main p {
     letter-spacing: 0;
-    margin: 0 8px 0 0
 }
 
 .remi-main a {
@@ -224,7 +215,6 @@ html {
 .remi-main div {
     padding: 8px 0;
     z-index: 0;
-    width: 640px;
 }
 
 .remi-main .HBox {
@@ -233,10 +223,34 @@ html {
     column-gap: 16px !important;
 }
 
+body > :nth-of-type(2) {
+    background: repeating-linear-gradient(
+        to bottom,
+        #FEFEFE,
+        #FEFEFE 2px,
+        #F0F0F0 2px,
+        #F0F0F9 4px
+    );
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.8);
+    position: relative;
+    transform: translateY(50%);
+    width: fit-content;
+}
+
 
 .remi-main .VBox {
+    row-gap: 8px !important;
     justify-content: start !important;
     align-items: start !important;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .1);
+}
+
+.remi-main .HBox, .remi-main .VBox {
+    box-sizing: border-box;
+    padding: 24px;
 }
 
 .remi-main>* {
@@ -256,8 +270,10 @@ html {
     cursor: default;
     overflow: auto;
     list-style: none;
-    min-width: 50%;
+    min-width: 200px;
     box-shadow: inset 1px 1px #999;
+    flex-grow: 1;
+    resize: horizontal;
 }
 
 .remi-main option:hover {
@@ -271,6 +287,7 @@ html {
     margin: 4px;
     padding: 4px;
     min-width: calc(100% - 8px);
+    border: none;
 }
 
 .remi-main .ListItem[selected='True'] {
@@ -283,13 +300,11 @@ html {
 .remi-main input[type='date'],
 .remi-main input[type='color'],
 .remi-main textarea,
-.remi-main li,
-.remi-main select {
-    border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, .12);
+.remi-main li {
+    border: 1px solid rgba(0, 0, 0, .5);
+    border-top: 1px solid rgba(0, 0, 0, .8);
     display: block;
     font-size: 95%;
-    margin: 8px;
     width: 100%;
     background: 0 0;
     text-align: left;
@@ -309,34 +324,83 @@ html {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
 
-.remi-main select {
-    border-bottom: 2px solid rgba(0, 0, 0, .12);
-}
-
 .remi-main input[type='checkbox'] {
     height: 100%;
     min-height: 20px;
     min-width: 20px;
 }
 
-.remi-main button {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background: rgba(200, 200, 200, 0.25);
-    /* -webkit-backdrop-filter: blur(1px); */
-    color: #000;
-    border: 1px solid #ccc;
-    border-radius: 16px;
-    box-shadow: inset 0 12px 2px rgba(255,255,255,0.5), 0 0px 4px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
-    font-size: 12pt;
-    line-height: 12pt;
-    margin: 8px;
-    padding: 8px;
+button, select {
+    grid-row: 1;
+    font-size: 14pt;
+    font-family: "Lucida Grande", "Lucida Sans", "Helvetica", "Arial", sans-serif;
+    min-height: 1.75em;
+    max-height: 1.75em;
+    padding: 0 2em;
+    min-width: 6em;
+    border: 0;
+    border-radius: 1000px;
+    position: relative !important;
+    overflow: hidden;
+    cursor: default;
+    outline: none;
+    background: linear-gradient(rgba(160, 160, 160, 0.625), rgba(255, 255, 255, 0.625));
+    box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.2), 0 0.125em 0.125em rgba(0, 0, 0, 0.3), inset 0 0.25em 0.25em rgba(0, 0, 0, 0.4), inset 0 0.375em 0.5em 0.25em #BBBBBB;
+}
+
+select {
+    appearance: none;
+    border-radius: 6px !important;
+    width: 100%;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+    padding-left: 16px;
+    background: linear-gradient(180deg, rgba(128,128,128,0.75) 0%, rgba(226,226,226,0.75) 1%, rgba(222,222,222,0.75) 23%, rgba(209,209,209,0.75) 36%, rgba(254,254,254,0.75) 99%, rgba(128,128,128,0.75) 100%) left / calc(100% - 32px) no-repeat, url('data:image/svg+xml,<%3Fxml version="1.0" encoding="UTF-8"%3F><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" version="1.1" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><path d="m15.99 5.992-5.711 8.525 11.491 0.032-5.78-8.557z"/><path d="m15.99 25.992-5.711-8.526 11.491-0.032-5.78 8.558z"/></svg>') right / 32px no-repeat, linear-gradient(180deg, rgba(7,71,156,0.75) 0%, rgba(77, 160, 255, 0.75) 1%, rgba(202, 229, 255, 0.75) 4%, rgba(170, 211, 255, 0.75) 29%, rgba(61, 155, 255, 0.75) 31%, rgba(174, 255, 255, 0.75) 99%, rgba(14,71,162,0.75) 100%) right / 32px no-repeat, rgba(255, 255, 255, 0.7);
+}
+
+select:disabled {
+    opacity: 0.5;
+    filter: saturate(0);
+}
+
+button:before, select:before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 33%;
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.3));
+    width: calc(100% - 0.875em);
+    border-radius: 2em 2em 0.5em 0.5em;
+    top: 5%;
+    filter: blur(1px);
+    z-index: 2 !important;
+}
+  
+button:after, select:after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 33%;
+    background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.5));
+    width: calc(100% - 1.25em);
+    border-radius: 0.75em;
+    bottom: 10%;
+    filter: blur(3px);
+}
+
+button:focus,
+button:active {
+      box-shadow: 0 0.375em 0.5em rgba(0, 0, 0, 0.2), 0 0.125em 0.125em rgba(0, 0, 0, 0.3), inset 0 0.25em 0.25em rgba(0, 0, 0, 0.4), inset 0 0.375em 0.5em 0.25em #BBBBBB, 0 0 0.5em rgba(0, 0, 0, 0.25);
+}
+
+button::first-line {
     position: relative;
-    min-width: 100px;
-    height: 32px;
+    top: -1px;
+    z-index: 1 !important;
+    -webkit-text-stroke-width: 0.025em;
+    -webkit-text-stroke-color: #000000;
+    text-shadow: 0 0.25em 0.2em rgba(0, 0, 0, 0.25);
 }
 
 @keyframes remi-main-outline-animation {
@@ -349,29 +413,14 @@ html {
     }
 }
 
-.remi-main button:focus {
-    box-shadow: inset -1px 1px #cee7ff, inset 1px 2px #98b8ea, inset -2px 2px #bcd4f6, inset 1px -1px #89ade4,
-        inset 2px -2px #89ade4;
-}
-
-.remi-main button:disabled {
-    color: #bbb;
-    opacity: 0.8;
-}
-
-.remi-main button:active {
-    background: #4A90E2;
-}
-
 .remi-main .TextInput {
     display: block;
-    font-family: "Lucida Grande", "Helvetica", "Arial", sans-serif;
-    margin: 8px;
+    font-family: "Lucida Grande", "Lucida Sans", "Helvetica", "Arial", sans-serif;
     padding: 0;
     width: 100%;
     /*background: 0 0;*/
     text-align: left;
-    color: inherit;
+    background-color: white;
 }
 
 .remi-main table {
@@ -407,13 +456,15 @@ html {
 }
 
 .remi-main p.DialogTitle {
-    background: rgba(19, 108, 209, .6);
+    background: rgba(84, 111, 143, 0.5);
     border: 0px;
+    border-bottom: 1px solid rgba(84, 111, 143, 0.8);
+    color: rgba(80, 80, 80, 0.8);
     margin: 0px;
-    color: white;
-    font-weight: bold;
+    padding: 4px 0 4px 0;
+    font-family: "Lucida Grande", "Lucida Sans", "Helvetica", "Arial", sans-serif;
     text-align: center;
-    margin: 0px;
+    margin-top: -8px;
 }
 
 .remi-main p.Title {
@@ -482,6 +533,19 @@ html {
 
 .remi-main .MenuItem:focus-within>.Menu {
     display: block;
+}
+
+.remi-main .GenericDialog {
+    border-radius: 8px 8px 0 0;
+    min-width: 640px;
+}
+
+.remi-main .GenericDialog .Label, .remi-main .GenericDialog .Container {
+    padding: 24px;
+}
+
+.remi-main .GenericDialog .DialogTitle {
+    padding: 4px !important;
 }
 
 .remi-main input.file {
@@ -732,6 +796,10 @@ html {
 
 .remi-main a {
     outline: none;
+}
+
+.remi-main .Label {
+    min-height: 14pt;
 }
 
 .remi-main .FileFolderItem {
