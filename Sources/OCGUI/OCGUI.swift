@@ -548,6 +548,8 @@ public class OCDialog : OCControl {
     }
 
     /// Show the dialog.
+    ///
+    /// **⚠️ WARNING!** If no `OCApp` subclass has been specified (during initialization or by setting `app`, this method will crash the program.
     public func show() {
         self._pythonObject.show(self._app)
     }
