@@ -164,7 +164,7 @@ public class OCControl : PythonConvertible {
 // MARK: - Mixins
 
 public protocol OCTextConvertible {
-    /// The text presented in the button.
+    /// The text presented in the control.
     var text: String { get set }
 }
 
@@ -216,14 +216,16 @@ public class OCImageView : OCControl {
     ///
     /// The filename parameter is a relative directory path.
     /// For example, ``image.png`` or ``subfolder/image.png``.
+    /// **All images must be located in the `/res` folder.**
     public init(filename: String) {
         super.init(_pythonObject: GUI.Image(filename: filename))
+        self.filename = filename
     }
 
     /// The filename of the image.
     public var filename: String {
         get { return String(self._pythonObject.attributes["src"])! }
-        set { self._pythonObject.set_image(filename: newValue); self._pythonObject.redraw() }
+        set { self._pythonObject.set_image("/res:\(newValue)"); self._pythonObject.redraw() }
     }
 
 }
@@ -499,6 +501,7 @@ public class OCDropDown : OCControl, OCControlChangeable {
 public class OCDialog : OCControl {
     
     private var _fields: [String: OCControl] = [:]
+    private var _app: OCApp? = nil
     
     private enum OCDialogError : Error {
         case keyAlreadyUsed
@@ -515,8 +518,9 @@ public class OCDialog : OCControl {
     }
 
     /// Create a dialog window with the specified title and message.
-    public init(title: String, message: String) {
+    public init(title: String, message: String, app: OCApp? = nil) {
         super.init(_pythonObject: GUI.GenericDialog(title: title, message: message))
+        self._app = app
     }
 
     /// Add an OCControl with the specified key.
@@ -538,8 +542,8 @@ public class OCDialog : OCControl {
     }
 
     /// Show the dialog.
-    public func show(in app: OCAppDelegate) {
-        self._pythonObject.show(app)
+    public func show() {
+        self._pythonObject.show(self._app)
     }
 
     /// Hide the dialog.
@@ -724,7 +728,7 @@ public class OCVBox : OCControl, OCLayout {
 
 public protocol OCAppDelegate : PythonConvertible {
     func _main(_ mainArgs: [PythonObject]) -> PythonObject
-    func main(app: OCAppDelegate) -> OCControl
+    func main(app: any OCAppDelegate) -> OCControl
     func close()
 }
 
@@ -734,7 +738,7 @@ public protocol OCAppDelegate : PythonConvertible {
 ///
 /// For example:
 /// ```swift
-/// override public func main(app: OCAppDelegate) -> OCControl {
+/// override public func main(app: any OCAppDelegate) -> OCControl {
 ///     // Set up the GUI. You can refer to class constants and variables.
 ///     let vBox: OCVBox = OCVBox(controls: [
 ///         OCTextField(hint: "Type here"),
@@ -783,10 +787,10 @@ open class OCApp : OCAppDelegate {
     
     /// End the program immediately.
     public func close() {
-        let stopDialog = OCDialog(title: "Program stopped", message: "It is now safe to close this tab.")
+        let stopDialog = OCDialog(title: "Program stopped", message: "It is now safe to close this tab.", app: self)
         stopDialog.cancelButton.visible = false
         stopDialog.confirmButton.visible = false
-        stopDialog.show(in: self)
+        stopDialog.show()
         print(self._server.stop())
     }
 
@@ -818,7 +822,7 @@ open class OCApp : OCAppDelegate {
     /// Override this method by copying the signature, prefixed with `override`. See the `OCApp` documentation for an example.
     ///
     /// If this method is not overridden, it will display a default layout explaining how to use it.
-    open func main(app: OCAppDelegate) -> OCControl {
+    open func main(app: any OCAppDelegate) -> OCControl {
         let label = OCLabel(text: "Override the main method to create a GUI. Copy the example code below to get started.")
 
         let textArea = OCTextArea()

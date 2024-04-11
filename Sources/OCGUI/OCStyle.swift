@@ -251,7 +251,7 @@ public enum OCColor {
         guard let child = Mirror(reflecting: self).children.first, let label = child.label else {
             return "\(self)"
         }
-        return "\(label)\(child.value)"
+        return if label != "hex" { "\(label)\(child.value)" } else { "\(child.value)" }
     }
 }
 
