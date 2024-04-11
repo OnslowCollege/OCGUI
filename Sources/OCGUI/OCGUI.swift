@@ -507,6 +507,12 @@ public class OCDialog : OCControl {
         case keyAlreadyUsed
     }
     
+    /// The OCApp subclass that will present the dialog. This can also be specified during initialization.
+    public var app: OCApp? {
+        get { return self._app }
+        set { self._app = newValue }
+    }
+    
     /// The confirm button.
     fileprivate var confirmButton: OCButton {
         return OCButton(_pythonObject: self._pythonObject.conf)
