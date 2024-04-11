@@ -263,7 +263,7 @@ body> :nth-of-type(2) {
 .remi-main .HBox,
 .remi-main .VBox {
     box-sizing: border-box;
-    padding: 8px;
+    padding: 24px;
 }
 
 .remi-main>* {
@@ -283,7 +283,6 @@ body> :nth-of-type(2) {
     overflow: auto;
     list-style: none;
     min-width: 200px;
-    width: initial !important;
     box-shadow: inset 1px 1px #999;
     resize: horizontal;
     margin: 0;
