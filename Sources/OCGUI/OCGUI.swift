@@ -154,6 +154,25 @@ public class OCControl : PythonConvertible {
     }
 
     /// Add a new item as a child to this control. If the key is not overridden, it is an empty string.
+    public func append(_ item: OCControl, key: String? = nil) {
+        self._pythonObject.append(value: item, key: key ?? "")
+    }
+    
+    /// Append multiple items as children to this control.
+    public func append(contentsOf items: [OCControl]) {
+        for item in items {
+            self.append(item)
+        }
+    }
+    
+    /// Append multiple items as children to this control, specifying keys.
+    public func append(contentsOf items: [String: OCControl]) {
+        for (key, value) in items {
+            self.append(value, key: key)
+        }
+    }
+    
+    /// Add text to this control. Used for `OCListView` and `OCDropDown`.
     public func append(item: String, key: String? = nil) {
         self._pythonObject.append(value: item, key: key ?? "")
     }
@@ -496,6 +515,50 @@ public class OCDropDown : OCControl, OCControlChangeable {
 }
 
 
+///// A menu item, shown in a menu.
+//public class OCMenuItem : OCControl {
+//
+//    /// Create a menu item with the specified text and optional key.
+//    public init(text: String) {
+//        super.init(_pythonObject: GUI.MenuItem(text: text))
+//    }
+//
+//    fileprivate init(pythonObject: PythonObject) {
+//        super.init(_pythonObject: pythonObject)
+//    }
+//
+//    /// The text shown in the menu item.
+//    public var text: String {
+//        get { return String(self._pythonObject.get_text())! }
+//        set { self._pythonObject.set_text(newValue); self._pythonObject.redraw() }
+//    }
+//    
+//    // Add another menu item.
+//    public func append(item: OCMenuItem) {
+//        self._pythonObject.append(item.pythonObject)
+//    }
+//
+//}
+//
+//
+///// A menu, containing menu items. Menus are normally shown in menu bars.
+//public class OCMenu : OCControl {
+//    public init() {
+//        super.init(_pythonObject: GUI.Menu())
+//    }
+//    
+//    /// Add a menu item to this menu.
+//    
+//}
+//
+//
+///// A menu bar, shown at the top of a GUI.
+//public class OCMenuBar : OCControl {
+//    public init() {
+//        super.init(_pythonObject: GUI.MenuBar())
+//    }
+//}
+
 
 /// A dialog window.
 public class OCDialog : OCControl {
@@ -641,7 +704,7 @@ public class OCListView : OCControl, OCControlChangeable {
     }
     
     /// Add a new item to the list. If the key is not overridden, it is the index of the item.
-    override public func append(item: String, key: String? = nil) {
+     public override func append(item: String, key: String? = nil) {
         self._items.append(item)
         self._pythonObject.append(value: item, key: key ?? "\(self._items.count - 1)")
     }
