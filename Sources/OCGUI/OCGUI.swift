@@ -229,7 +229,7 @@ public class OCLabel : OCControl, OCTextConvertible {
 
 
 /// A view that shows a PNG image.
-public class OCImageView : OCControl {
+public class OCImageView : OCControl, OCControlClickable {
 
     /// Create an image view.
     ///
