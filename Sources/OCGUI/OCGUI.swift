@@ -249,6 +249,39 @@ public class OCImageView : OCControl, OCControlClickable {
 
 }
 
+/// A view that shows a video clip.
+public class OCMediaView : OCControl {
+
+    /// Create a media view.
+    ///
+    /// The filename parameter is a relative directory path.
+    /// For example, ``video.mp4`` or ``subfolder/audio.m4a``.
+    /// **All media must be located in the `/res` folder.**
+    public init(filename: String, shouldAutoplay: Bool = true, shouldLoop: Bool = false) {
+        super.init(_pythonObject: GUI.VideoPlayer(video: filename, autoplay: shouldAutoplay, loop: shouldLoop))
+        self.filename = filename
+    }
+
+    /// The filename of the media.
+    public var filename: String {
+        get { return String(self._pythonObject.attributes["src"])! }
+        set { self._pythonObject.attributes["src"] = newValue; self._pythonObject.redraw() }
+    }
+
+    /// Whether the media should play automatically once displayed.
+    public var shouldAutoplay: Bool {
+        get { return String(self._pythonObject.attributes["autoplay"])! }
+        set { self._pythonObject.set_autoplay(newValue) }
+    }
+
+    /// Whether the media should automatically replay again once it has ended.
+    public var shouldLoop: Bool {
+        get { return String(self._pythonObject.attributes["loop"])! }
+        set { self._pythonObject.set_loop(newValue) }
+    }
+
+}
+
 
 
 /// A single-line field for the user to enter text.
