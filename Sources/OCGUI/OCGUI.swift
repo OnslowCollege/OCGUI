@@ -265,18 +265,18 @@ public class OCMediaView : OCControl {
     /// The filename of the media.
     public var filename: String {
         get { return String(self._pythonObject.attributes["src"])! }
-        set { self._pythonObject.attributes["src"] = newValue; self._pythonObject.redraw() }
+        set { self._pythonObject.attributes["src"] = PythonObject(newValue); self._pythonObject.redraw() }
     }
 
     /// Whether the media should play automatically once displayed.
     public var shouldAutoplay: Bool {
-        get { return String(self._pythonObject.attributes["autoplay"])! }
+        get { return Bool(self._pythonObject.attributes["autoplay"])! }
         set { self._pythonObject.set_autoplay(newValue) }
     }
 
     /// Whether the media should automatically replay again once it has ended.
     public var shouldLoop: Bool {
-        get { return String(self._pythonObject.attributes["loop"])! }
+        get { return Bool(self._pythonObject.attributes["loop"])! }
         set { self._pythonObject.set_loop(newValue) }
     }
 
