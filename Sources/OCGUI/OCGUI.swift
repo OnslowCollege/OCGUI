@@ -114,13 +114,13 @@ open class OCApp {
         let rootControl = main(app: delegate)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 100, y: 100, width: 900, height: 600),
+            contentRect: NSRect(x: 100, y: 100, width: 1000, height: 1000),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
 
-        window.title = "OCGUI App"
+        window.title = "OCGUI"
         window.contentView = NSHostingView(rootView: OCControlView(control: rootControl))
         window.makeKeyAndOrderFront(nil)
 
