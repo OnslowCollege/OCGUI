@@ -99,6 +99,7 @@ public class OCBox: OCControl {
 public final class OCVBox: OCBox {}
 public final class OCHBox: OCBox {}
 
+@MainActor
 open class OCApp {
     public init() {}
 
